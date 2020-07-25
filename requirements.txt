@@ -1,0 +1,3 @@
+aiofiles
+python-dotenv
+discord

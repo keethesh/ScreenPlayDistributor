@@ -1,3 +1,5 @@
 aiofiles
 python-dotenv
 discord
+aiohttp
+validators

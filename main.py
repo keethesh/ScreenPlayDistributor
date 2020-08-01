@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import re
@@ -19,18 +20,21 @@ client = Bot(command_prefix="$key ", case_insensitive=True)
 keys_file = "keys.json"
 steam_key_regex = "((?![^0-9]{12,}|[^A-z]{12,})([A-z0-9]{4,5}-?[A-z0-9]{4,5}-?[A-z0-9]{4,5}(-?[A-z0-9]" \
                   "{4,5}(-?[A-z0-9]{4,5})?)?))"
+lock = asyncio.Lock()
 
 
 async def get_keys(keys_json: str):
-    async with aiofiles.open(keys_json) as f:
-        keys = json.loads(await f.read())
+    async with lock:
+        async with aiofiles.open(keys_json) as f:
+            keys = json.loads(await f.read())
     return keys
 
 
 async def update_keys(keys_json: str, keys: dict):
     jsonified_dict = json.dumps(keys, indent=2, sort_keys=True)
-    async with aiofiles.open(keys_json, "w+") as f:
-        await f.write(jsonified_dict)
+    async with lock:
+        async with aiofiles.open(keys_json, "w+") as f:
+            await f.write(jsonified_dict)
 
 
 async def get_available_key(keys: dict, author_id):

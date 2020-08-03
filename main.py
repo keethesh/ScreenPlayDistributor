@@ -48,6 +48,15 @@ async def get_available_key(keys: dict, author_id):
     return None
 
 
+async def unassign_key(keys: dict, author_id):
+    for key in keys:
+        claimed_by = key["claimed_by"]
+        if claimed_by == author_id:
+            key["claimed_by"] = None
+            await update_keys(keys_file, keys)
+    return None
+
+
 async def check_for_duplicates(steam_keys: list, new_keys: list):
     added_keys = 0
     modified_steam_keys = deepcopy(steam_keys)
@@ -95,10 +104,17 @@ async def on_message(message: Message):
             return
 
         user = client.get_user(author_id)
-        embed = discord.Embed(title=f"Check your DMs!",
-                              color=0x1a58a6)
-        await message.channel.send(f"{message.author.mention}!", embed=embed)
-        await user.send(f"Hey there {user.name}! Here's your ScreenPlay Steam key: `{steam_key}`")
+        try:
+            await user.send(f"Hey there {user.name}! Here's your ScreenPlay Steam key: `{steam_key}`")
+            embed = discord.Embed(title=f"Check your DMs!",
+                                  color=0x1a58a6)
+            await message.channel.send(f"{message.author.mention}!", embed=embed)
+        except discord.errors.Forbidden:
+            await unassign_key(keys, author_id)
+            embed = discord.Embed(title=f"I cannot DM you! Check if DMs from this server is allowed in"
+                                        f"your settings, and try again :slight_smile:",
+                                  color=0x1a58a6)
+            await message.channel.send(f"{message.author.mention}!", embed=embed)
     else:
         await client.process_commands(message)
 
@@ -112,7 +128,7 @@ async def count(ctx):
     for key in keys:
         if key["claimed_by"] is None:
             available_keys += 1
-    percentage = (total_keys // available_keys) * 100
+    percentage = int(available_keys / total_keys * 100)
     embed = discord.Embed(title=f"{available_keys} Steam keys left out of {total_keys}!\n"
                                 f"{percentage}% of Steam keys remaining",
                           color=0x1a58a6)

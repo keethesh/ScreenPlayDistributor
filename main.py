@@ -137,33 +137,34 @@ async def count(ctx):
 
 @client.command(hidden=True)
 async def add(ctx, value):
-    is_key = False
-    is_link = False
-    if re.match(steam_key_regex, value):
-        is_key = True
-    elif validators.url(value):
-        is_link = True
+    if ctx.author.id == 189271942564544512: # if the user ID is not Kelteseth's ID
+        is_key = False
+        is_link = False
+        if re.match(steam_key_regex, value):
+            is_key = True
+        elif validators.url(value):
+            is_link = True
 
-    if ctx.channel.type is not discord.ChannelType.private:
-        return
-    elif not (is_link or is_key):
-        await ctx.send(f"`{value}` is not a valid Steam key or link")
-        return
-
-    keys = await get_keys(keys_file)
-    if is_key:
-        if (await check_for_duplicates(keys, [value]))[0] == 0:
-            await ctx.send(f"`{value}` is already in the database!")
+        if ctx.channel.type is not discord.ChannelType.private:
             return
-        await ctx.send(f"Successfully added your key to the database!")
-    else:
-        try:
-            downloaded_keys = await download_keys(value)
-            total, keys = await check_for_duplicates(keys, downloaded_keys)
-            await ctx.send(f"Successfully added a total of {total} keys to the database out of {len(downloaded_keys)}")
-        except Exception as e:
-            await ctx.send(f"Received exception: '{e}'. Keys not added.")
-    await update_keys(keys_file, keys)
+        elif not (is_link or is_key):
+            await ctx.send(f"`{value}` is not a valid Steam key or link")
+            return
+
+        keys = await get_keys(keys_file)
+        if is_key:
+            if (await check_for_duplicates(keys, [value]))[0] == 0:
+                await ctx.send(f"`{value}` is already in the database!")
+                return
+            await ctx.send(f"Successfully added your key to the database!")
+        else:
+            try:
+                downloaded_keys = await download_keys(value)
+                total, keys = await check_for_duplicates(keys, downloaded_keys)
+                await ctx.send(f"Successfully added a total of {total} keys to the database out of {len(downloaded_keys)}")
+            except Exception as e:
+                await ctx.send(f"Received exception: '{e}'. Keys not added.")
+        await update_keys(keys_file, keys)
 
 
 client.run(token)
